@@ -5,8 +5,8 @@ step:
       selector:
         device:
           multiple: true
-          filter:
-            integration: ring_ptz
+          entity:
+            - integration: ring_ptz
     direction: &direction
       required: true
       selector:

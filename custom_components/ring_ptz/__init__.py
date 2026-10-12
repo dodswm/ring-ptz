@@ -23,6 +23,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady,
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
@@ -50,6 +51,10 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 type RingPtzConfigEntry = ConfigEntry[dict[int, PtzCamera]]
 
+# HA 2026: device identifiers are unique per config entry, so sharing the Ring integration's
+# identifier no longer merges devices; entities join its device via Entity.device_entry instead.
+_PER_ENTRY_IDENTIFIERS = hasattr(dr.DeviceRegistry, "async_get_device_by_identifier")
+
 
 class PtzCamera:
     """One pan-tilt camera: the PTZ client plus last known angles for the sensors."""
@@ -63,12 +68,42 @@ class PtzCamera:
         self._listeners: list[CALLBACK_TYPE] = []
         self._refresh: CALLBACK_TYPE | None = None
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        identifiers = {(DOMAIN, str(self.info["id"]))}
-        if self.info.get("device_id"):
-            identifiers.add((RING_DOMAIN, self.info["device_id"]))  # same device as the Ring integration's camera
-        return DeviceInfo(identifiers=identifiers, manufacturer="Ring", model="Pan-Tilt Indoor Cam", name=self.info["name"])
+    @callback
+    def ring_device(self) -> dr.DeviceEntry | None:
+        """The Ring integration's device for this camera, if it has registered one."""
+        if not (ring_id := self.info.get("device_id")):
+            return None
+        registry = dr.async_get(self.hass)
+        identifier = (RING_DOMAIN, ring_id)
+        if _PER_ENTRY_IDENTIFIERS:
+            for ring_entry in self.hass.config_entries.async_entries(RING_DOMAIN):
+                if device := registry.async_get_device_by_identifier(identifier, ring_entry.entry_id):
+                    return device
+            return None
+        return registry.async_get_device(identifiers={identifier})
+
+    @callback
+    def own_device(self) -> dr.DeviceEntry | None:
+        """Our own device for this camera (only used when Ring has none)."""
+        registry = dr.async_get(self.hass)
+        identifier = (DOMAIN, str(self.info["id"]))
+        if _PER_ENTRY_IDENTIFIERS:
+            return registry.async_get_device_by_identifier(identifier, self.entry.entry_id)
+        return registry.async_get_device(identifiers={identifier})
+
+    @callback
+    def link_entity(self, entity: Entity) -> None:
+        """Put the entity on the Ring integration's camera device, else on our own device."""
+        device = self.ring_device()
+        if device is None:
+            entity._attr_device_info = DeviceInfo(  # noqa: SLF001
+                identifiers={(DOMAIN, str(self.info["id"]))},
+                manufacturer="Ring", model="Pan-Tilt Indoor Cam", name=self.info["name"],
+            )
+        elif _PER_ENTRY_IDENTIFIERS:
+            entity.device_entry = device  # HA 2026+: how an entity joins another integration's device
+        else:
+            entity._attr_device_info = DeviceInfo(identifiers={(RING_DOMAIN, self.info["device_id"])})  # noqa: SLF001
 
     async def run(self, action: Callable[[RingPtz], Awaitable[Any]], refresh: bool = True) -> Any:
         """Run a PTZ action, mapping errors for HA; refresh the angle sensors afterwards."""
@@ -153,7 +188,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: RingPtzConfigEntry) -> b
 
     ssl_context = client_context()
     entry.runtime_data = {d["id"]: PtzCamera(hass, entry, d, RingPtz(auth, d["id"], ssl_context)) for d in devices}
+
+    # Our own device is only a fallback: drop it once the Ring integration has the camera, so its
+    # entities are re-created on the Ring device (0.1.0 created a duplicate on HA 2026).
+    registry = dr.async_get(hass)
+    for camera in entry.runtime_data.values():
+        if (ring := camera.ring_device()) and (own := camera.own_device()) and own.id != ring.id:
+            registry.async_remove_device(own.id)
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_remove_config_entry_device(hass: HomeAssistant, entry: ConfigEntry, device: dr.DeviceEntry) -> bool:
+    """Allow deleting our fallback device from the UI."""
     return True
 
 
@@ -166,13 +214,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: RingPtzConfigEntry) -> 
 
 def _cameras_for(hass: HomeAssistant, call: ServiceCall) -> list[PtzCamera]:
     """Resolve the call's device_id(s) to loaded cameras."""
-    registry = dr.async_get(hass)
+    loaded = [cam for entry in hass.config_entries.async_loaded_entries(DOMAIN) for cam in entry.runtime_data.values()]
     cameras: list[PtzCamera] = []
     for device_id in call.data[ATTR_DEVICE_ID]:
-        device = registry.async_get(device_id)
-        ids = {int(value) for domain, value in (device.identifiers if device else ()) if domain == DOMAIN}
-        found = [cam for entry in hass.config_entries.async_loaded_entries(DOMAIN)
-                 for cam_id, cam in entry.runtime_data.items() if cam_id in ids]
+        # The camera's entities live on the Ring integration's device, or on our fallback device
+        found = [cam for cam in loaded
+                 if device_id in {d.id for d in (cam.ring_device(), cam.own_device()) if d}]
         if not found:
             raise ServiceValidationError(f"{device_id} is not a Ring pan-tilt camera")
         cameras.extend(found)

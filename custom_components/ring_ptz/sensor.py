@@ -27,7 +27,7 @@ class PtzAngleSensor(RestoreSensor):
         self._field = field
         self._attr_translation_key = key
         self._attr_unique_id = f"{camera.info['id']}_{key}_angle"
-        self._attr_device_info = camera.device_info
+        camera.link_entity(self)
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

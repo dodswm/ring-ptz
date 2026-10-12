@@ -29,7 +29,7 @@ class PtzButton(ButtonEntity):
         self._direction = direction
         self._attr_translation_key = key
         self._attr_unique_id = f"{camera.info['id']}_{key}"
-        self._attr_device_info = camera.device_info
+        camera.link_entity(self)
 
     async def async_press(self) -> None:
         if self._direction:
