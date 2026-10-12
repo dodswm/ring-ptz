@@ -1,0 +1,97 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ring account",
+        "description": "Log in to the Ring account that owns the Pan-Tilt Indoor Cam. This creates a separate Ring session, so the Ring integration stays logged in.",
+        "data": { "username": "Email", "password": "Password" }
+      },
+      "2fa": {
+        "title": "Two-factor authentication",
+        "description": "Enter the code Ring sent you.",
+        "data": { "code": "Code" }
+      },
+      "reauth_confirm": {
+        "title": "Log in to Ring again",
+        "description": "The Ring login for {username} has expired.",
+        "data": { "password": "Password" }
+      }
+    },
+    "error": {
+      "invalid_auth": "Wrong email, password or code.",
+      "cannot_connect": "Couldn't reach Ring. Ring briefly refuses logins after many attempts (HTTP 406); wait a while and try again."
+    },
+    "abort": {
+      "already_configured": "This Ring account is already set up.",
+      "no_devices": "No Pan-Tilt Indoor Cam found on this Ring account.",
+      "reauth_successful": "Logged in again."
+    }
+  },
+  "entity": {
+    "button": {
+      "pan_left": { "name": "Pan left" },
+      "pan_right": { "name": "Pan right" },
+      "tilt_up": { "name": "Tilt up" },
+      "tilt_down": { "name": "Tilt down" },
+      "home": { "name": "Home position" }
+    },
+    "sensor": {
+      "pan": { "name": "Pan angle" },
+      "tilt": { "name": "Tilt angle" }
+    }
+  },
+  "selector": {
+    "direction": {
+      "options": { "left": "Left", "right": "Right", "up": "Up", "down": "Down" }
+    }
+  },
+  "services": {
+    "step": {
+      "name": "Step",
+      "description": "Move one step (about 16° pan or 10° tilt).",
+      "fields": {
+        "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." },
+        "direction": { "name": "Direction", "description": "Which way to move." }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Start moving continuously, or keep an ongoing move going. It stops after the duration unless called again, or on Stop.",
+      "fields": {
+        "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." },
+        "direction": { "name": "Direction", "description": "Which way to move." },
+        "speed": { "name": "Speed", "description": "Motor speed (0.5 ≈ 34°/s; below about 0.4 it doesn't move)." },
+        "duration": { "name": "Duration", "description": "Stop automatically after this many seconds." }
+      }
+    },
+    "stop": {
+      "name": "Stop",
+      "description": "Stop a continuous move.",
+      "fields": { "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." } }
+    },
+    "home": {
+      "name": "Home position",
+      "description": "Go to the Home Position set in the Ring app.",
+      "fields": { "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." } }
+    },
+    "prepare": {
+      "name": "Prepare",
+      "description": "Open a Ring session now so the next command is instant (the pad card calls this on press).",
+      "fields": { "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." } }
+    },
+    "set_position": {
+      "name": "Set position",
+      "description": "Point the camera at exact pan/tilt angles.",
+      "fields": {
+        "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." },
+        "pan": { "name": "Pan", "description": "Pan angle in degrees." },
+        "tilt": { "name": "Tilt", "description": "Tilt angle in degrees." }
+      }
+    },
+    "get_position": {
+      "name": "Get position",
+      "description": "Read the current pan/tilt angles.",
+      "fields": { "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." } }
+    }
+  }
+}

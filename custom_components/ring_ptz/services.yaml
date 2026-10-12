@@ -1,0 +1,63 @@
+step:
+  fields:
+    device_id: &device
+      required: true
+      selector:
+        device:
+          multiple: true
+          filter:
+            integration: ring_ptz
+    direction: &direction
+      required: true
+      selector:
+        select:
+          translation_key: direction
+          options: [left, right, up, down]
+move:
+  fields:
+    device_id: *device
+    direction: *direction
+    speed:
+      default: 0.5
+      selector:
+        number:
+          min: 0.4
+          max: 0.63
+          step: 0.01
+    duration:
+      default: 3
+      selector:
+        number:
+          min: 0.5
+          max: 10
+          step: 0.5
+          unit_of_measurement: s
+stop:
+  fields:
+    device_id: *device
+home:
+  fields:
+    device_id: *device
+prepare:
+  fields:
+    device_id: *device
+set_position:
+  fields:
+    device_id: *device
+    pan:
+      required: true
+      selector:
+        number:
+          min: -177
+          max: 177
+          unit_of_measurement: °
+    tilt:
+      required: true
+      selector:
+        number:
+          min: -55
+          max: 30
+          unit_of_measurement: °
+get_position:
+  fields:
+    device_id: *device
