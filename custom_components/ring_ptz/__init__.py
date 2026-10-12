@@ -234,7 +234,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
         "step": ({vol.Required(ATTR_DIRECTION): direction},
                  lambda call: lambda ptz: ptz.step(call.data[ATTR_DIRECTION])),
         "move": ({vol.Required(ATTR_DIRECTION): direction,
-                  vol.Optional(ATTR_SPEED, default=DEFAULT_SPEED): vol.All(vol.Coerce(float), vol.Range(min=0.4, max=0.63)),
+                  vol.Optional(ATTR_SPEED, default=DEFAULT_SPEED): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=0.63)),
                   vol.Optional(ATTR_DURATION, default=3.0): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=10))},
                  lambda call: lambda ptz: ptz.move(call.data[ATTR_DIRECTION], call.data[ATTR_SPEED], call.data[ATTR_DURATION])),
         "stop": ({}, lambda call: lambda ptz: ptz.stop()),

@@ -33,7 +33,7 @@ The card is bundled and loads automatically, so you don't need to add a resource
 
 ```yaml
 type: custom:ptz-pad-card
-entity: sensor.girls_bedroom_pan_angle   # any Ring Pan-Tilt entity of the camera
+entity: sensor.living_room_camera_pan_angle   # any Ring Pan-Tilt entity of the camera
 show_angles: true                        # optional (off by default): "Pan 32° · Tilt -33°" under the buttons
 ```
 
@@ -52,7 +52,7 @@ Each service takes `device_id`, which can be one or more cameras.
 | Service | Fields | |
 |---|---|---|
 | `ring_ptz.step` | `direction`: left / right / up / down | one step |
-| `ring_ptz.move` | `direction`, `speed` (0.4–0.63, default 0.5), `duration` (s, default 3) | continuous move that stops after `duration` unless called again |
+| `ring_ptz.move` | `direction`, `speed` (0.5–0.63, default 0.5), `duration` (s, default 3) | continuous move that stops after `duration` unless called again |
 | `ring_ptz.stop` | | stop a continuous move |
 | `ring_ptz.home` | | go to the Home Position |
 | `ring_ptz.set_position` | `pan` (about ±177°), `tilt` (about -55…30°) | go to exact angles |
@@ -73,7 +73,7 @@ live-view session. This is the same signalling websocket the Ring integration us
 | Method | Params |
 |---|---|
 | `PTZ.Pan.Step` / `PTZ.Tilt.Step` | `direction`: `LEFT`/`RIGHT` / `UP`/`DOWN` |
-| `PTZ.Pan.Continuous` / `PTZ.Tilt.Continuous` | `direction`, `speed` (0 stops; about 0.3 doesn't move; 0.5 ≈ 34°/s) |
+| `PTZ.Pan.Continuous` / `PTZ.Tilt.Continuous` | `direction`, `speed` (0 stops; 0.4 and below don't move; 0.5 ≈ 34°/s) |
 | `PTZ.Set` | `panAngle`, `tiltAngle` |
 | `PTZ.Get` | returns `panAngle`, `tiltAngle` |
 | `PTZ.Overview`, `PTZ.Calibrate`, `PTZ.AutoTrack.Get` | (not used yet) |

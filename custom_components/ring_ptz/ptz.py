@@ -14,7 +14,7 @@ Camera notifications arrive the same way with a "method" (PTZ.Pan.Halted / PTZ.T
 {direction, reason: LIMIT_REACHED}, …Aborted, PTZ.AutoTrack.StateChanged).
 
 Methods: PTZ.Pan.Step / PTZ.Tilt.Step {direction LEFT|RIGHT / UP|DOWN} (≈16° / 10°),
-PTZ.Pan.Continuous / PTZ.Tilt.Continuous {direction, speed} (speed 0 = stop; 0.3 doesn't move,
+PTZ.Pan.Continuous / PTZ.Tilt.Continuous {direction, speed} (speed 0 = stop; 0.4 and below don't move,
 0.5 ≈ 34°/s; settings max 0.63 / 0.56), PTZ.Set {panAngle, tiltAngle}, PTZ.Get, PTZ.Overview,
 PTZ.Calibrate, PTZ.AutoTrack.Get. PTZ.HomePosition.Return = "Method not found" → home = PTZ.Set to
 GET /devices/v1/devices/<id>/settings → ptz_settings.{pan,tilt}_settings.positions.default.
@@ -41,10 +41,14 @@ from ring_doorbell.const import (
     API_URI,
     APP_API_URI,
     DEVICES_ENDPOINT,
-    INDOOR_CAM_PTZ_KINDS,
     RTC_STREAMING_TICKET_ENDPOINT,
     RTC_STREAMING_WEB_SOCKET_ENDPOINT,
 )
+
+try:
+    from ring_doorbell.const import INDOOR_CAM_PTZ_KINDS
+except ImportError:  # older python-ring-doorbell
+    INDOOR_CAM_PTZ_KINDS = ["stickup_cam_mini_ptz_v1"]
 from websockets.asyncio.client import ClientConnection, connect
 
 _LOGGER = logging.getLogger(__name__)
@@ -179,7 +183,11 @@ class _Session:
         finally:
             self._pending.pop(rid, None)
 
-    async def close(self) -> None:
+    async def close(self, grace: float = 0.0) -> None:
+        """Close, first letting replies already in flight arrive (up to `grace` seconds)."""
+        deadline = time.monotonic() + grace
+        while self._pending and not self.closed and time.monotonic() < deadline:
+            await asyncio.sleep(0.1)
         if not self._reader.done():
             await self.ws.close()
             await asyncio.wait([self._reader], timeout=5)
@@ -227,7 +235,8 @@ class RingPtz:
             if not self._session or self._session.time_left() < min_left:
                 old, self._session = self._session, await self._open()
                 if old:
-                    task = asyncio.create_task(old.close())
+                    # a command may still be waiting for its reply on the old session
+                    task = asyncio.create_task(old.close(grace=REPLY_TIMEOUT))
                     self._closing.add(task)
                     task.add_done_callback(self._closing.discard)
             return self._session
@@ -243,11 +252,18 @@ class RingPtz:
     async def get(self) -> dict[str, Any]:
         return await self.rpc("PTZ.Get")
 
+    async def _end_move(self) -> None:
+        """Stop a continuous move first, so its watchdog can't cut the next command short."""
+        if self._moving:
+            await self.stop()
+
     async def step(self, direction: str) -> None:
         axis, value = DIRECTIONS[direction]
+        await self._end_move()
         await self.rpc(f"PTZ.{axis}.Step", {"direction": value})
 
     async def set(self, pan: float, tilt: float) -> None:
+        await self._end_move()
         await self.rpc("PTZ.Set", {"panAngle": round(pan), "tiltAngle": round(tilt)})
 
     async def home_position(self) -> tuple[float, float]:

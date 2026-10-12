@@ -60,7 +60,7 @@
       "fields": {
         "device_id": { "name": "Camera", "description": "Ring pan-tilt camera." },
         "direction": { "name": "Direction", "description": "Which way to move." },
-        "speed": { "name": "Speed", "description": "Motor speed (0.5 ≈ 34°/s; below about 0.4 it doesn't move)." },
+        "speed": { "name": "Speed", "description": "Motor speed (0.5 ≈ 34°/s; 0.4 and below don't move the motors)." },
         "duration": { "name": "Duration", "description": "Stop automatically after this many seconds." }
       }
     },

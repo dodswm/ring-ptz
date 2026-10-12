@@ -20,3 +20,5 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # brand images ship in custom_components/ring_ptz/brand (served locally since HA 2026)
+          ignore: brands
