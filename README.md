@@ -34,7 +34,7 @@ The card is bundled and loads automatically, so you don't need to add a resource
 ```yaml
 type: custom:ptz-pad-card
 entity: sensor.girls_bedroom_pan_angle   # any Ring Pan-Tilt entity of the camera
-show_angles: true                        # "Pan 32° · Tilt -33°" under the buttons
+show_angles: true                        # optional (off by default): "Pan 32° · Tilt -33°" under the buttons
 ```
 
 | Button | Tap | Hold |

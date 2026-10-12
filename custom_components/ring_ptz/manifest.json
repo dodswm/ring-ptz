@@ -9,5 +9,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/dodswm/ring-ptz/issues",
   "requirements": ["ring-doorbell>=0.9.12"],
-  "version": "0.1.1"
+  "version": "0.1.2"
 }

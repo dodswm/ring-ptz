@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "button": {
+      "pan_left": { "default": "mdi:chevron-left" },
+      "pan_right": { "default": "mdi:chevron-right" },
+      "tilt_up": { "default": "mdi:chevron-up" },
+      "tilt_down": { "default": "mdi:chevron-down" },
+      "home": { "default": "mdi:home-outline" }
+    },
+    "sensor": {
+      "pan": { "default": "mdi:pan-horizontal" },
+      "tilt": { "default": "mdi:pan-vertical" }
+    }
+  },
+  "services": {
+    "step": { "service": "mdi:debug-step-over" },
+    "move": { "service": "mdi:pan" },
+    "stop": { "service": "mdi:stop" },
+    "home": { "service": "mdi:home-outline" },
+    "prepare": { "service": "mdi:connection" },
+    "set_position": { "service": "mdi:crosshairs-gps" },
+    "get_position": { "service": "mdi:crosshairs-question" }
+  }
+}

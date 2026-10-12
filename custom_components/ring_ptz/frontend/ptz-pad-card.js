@@ -1,5 +1,5 @@
 // ptz-pad-card: ◀ ▲ ⌂ ▼ ▶ pad for Ring Pan-Tilt (ring_ptz), served by the integration.
-// config: { type: custom:ptz-pad-card, entity: <any ring_ptz entity of the camera>, show_angles?: bool }
+// config: { type: custom:ptz-pad-card, entity: <any ring_ptz entity of the camera>, show_angles?: bool (default off) }
 //         (or device_id instead of entity)
 // Tap = one step. Hold (>350 ms) = continuous move until released: ring_ptz.move is renewed every
 // 1.5 s while held and the integration stops 3 s after the last renewal, so a lost release can't
@@ -21,12 +21,14 @@ class PtzPadCard extends HTMLElement {
         { name: "entity", required: true, selector: { entity: { filter: { integration: "ring_ptz" } } } },
         { name: "show_angles", selector: { boolean: {} } },
       ],
+      computeLabel: (schema) =>
+        ({ entity: "Camera (any Ring Pan-Tilt entity)", show_angles: "Show pan/tilt angles under the buttons" })[schema.name],
     };
   }
 
   static getStubConfig(hass) {
     const entity = Object.values(hass.entities || {}).find((e) => e.platform === "ring_ptz");
-    return { entity: entity ? entity.entity_id : "", show_angles: true };
+    return { entity: entity ? entity.entity_id : "" };
   }
 
   setConfig(config) {
@@ -61,7 +63,7 @@ class PtzPadCard extends HTMLElement {
     const el = this.shadowRoot && this.shadowRoot.querySelector(".angles");
     if (!el || !this._hass) return;
     const ids = this._angleEntities();
-    if (this._config.show_angles === false || (!ids.pan && !ids.tilt)) {
+    if (!this._config.show_angles || (!ids.pan && !ids.tilt)) {
       el.hidden = true;
       return;
     }
@@ -177,5 +179,6 @@ if (!customElements.get("ptz-pad-card")) {
     type: "ptz-pad-card",
     name: "Ring Pan-Tilt pad",
     description: "Tap to step, hold to pan/tilt a Ring Pan-Tilt Indoor Cam",
+    documentationURL: "https://github.com/dodswm/ring-ptz#card",
   });
 }
