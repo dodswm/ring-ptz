@@ -1,5 +1,8 @@
 # Ring Pan-Tilt for Home Assistant
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Validate](https://github.com/dodswm/ring-ptz/actions/workflows/validate.yml/badge.svg)](https://github.com/dodswm/ring-ptz/actions/workflows/validate.yml)
+
 Pan and tilt the **Ring Pan-Tilt Indoor Cam** from Home Assistant.
 
 Home Assistant's built-in Ring integration shows this camera's live view but can't move it. This
